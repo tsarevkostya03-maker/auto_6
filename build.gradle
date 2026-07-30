@@ -5,16 +5,23 @@ plugins {
 group = 'ru.netology'
 version = '1.0-SNAPSHOT'
 
+java {
+    sourceCompatibility = 11
+}
+
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
     // Selenide
-    testImplementation 'com.codeborne:selenide:6.12.4'
+    testImplementation 'com.codeborne:selenide:6.19.1'
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 
     // JavaFaker
     testImplementation 'com.github.javafaker:javafaker:1.0.2'
@@ -32,4 +39,5 @@ dependencies {
 test {
     useJUnitPlatform()
     systemProperty 'selenide.headless', System.getProperty('selenide.headless')
+    systemProperty 'chromeoptions.prefs', System.getProperty('chromeoptions.prefs', "profile.password_manager_leak_detection=false")
 }
