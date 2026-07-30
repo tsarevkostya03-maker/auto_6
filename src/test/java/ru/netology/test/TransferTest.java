@@ -16,7 +16,6 @@ public class TransferTest {
 
     @BeforeEach
     void setup() {
-        Configuration.headless = true;
         open("http://localhost:9999");
         LoginPage loginPage = new LoginPage();
         var authInfo = DataHelper.getAuthInfo();
