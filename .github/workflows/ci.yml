@@ -25,7 +25,6 @@ jobs:
       - name: Start SUT
         run: |
           java -jar ./artifacts/app-ibank-build-for-testers.jar &
-          sleep 15
 
       - name: Run tests
         run: ./gradlew test --info -Dselenide.headless=true
