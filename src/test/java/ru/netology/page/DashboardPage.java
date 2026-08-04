@@ -1,5 +1,6 @@
 package ru.netology.page;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 import ru.netology.data.DataHelper;
@@ -23,7 +24,7 @@ public class DashboardPage {
     }
 
     private SelenideElement findCardByNumber(String cardNumber) {
-        // Ищем карту по тексту номера
-        return cards.findBy(text -> text.getText().contains(cardNumber));
+        // Ищем карту по тексту номера, используя Condition.text()
+        return cards.find(Condition.text(cardNumber));
     }
 }
