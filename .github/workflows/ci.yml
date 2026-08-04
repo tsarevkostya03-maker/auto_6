@@ -19,9 +19,12 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
       - name: Start SUT
         run: |
-          java -jar ./artifacts/app-replan-delivery.jar &
+          java -jar ./artifacts/app-ibank-build-for-testers.jar &
           sleep 15
 
       - name: Run tests
