@@ -42,11 +42,12 @@ public class DataHelper {
         return 10000;
     }
 
-    public static int generateRandomTransferAmount(int min, int max) {
-        return faker.number().numberBetween(min, max);
-    }
-
     public static int generateValidTransferAmount(int currentBalance) {
         return faker.number().numberBetween(1, currentBalance);
+    }
+
+    public static String getLastFourDigits(String cardNumber) {
+        String digits = cardNumber.replaceAll("\\s", "");
+        return digits.substring(digits.length() - 4);
     }
 }

@@ -9,14 +9,19 @@ import ru.netology.page.LoginPage;
 import ru.netology.page.TransferPage;
 
 import static com.codeborne.selenide.Selenide.open;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TransferTest {
     private DashboardPage dashboardPage;
 
     @BeforeEach
     void setup() {
+        Configuration.browserSize = "1920x1080";
+        Configuration.timeout = 15000;
+        Configuration.headless = false;
+
         open("http://localhost:9999");
+
         LoginPage loginPage = new LoginPage();
         var authInfo = DataHelper.getAuthInfo();
         var verificationPage = loginPage.validLogin(authInfo);
@@ -26,134 +31,152 @@ public class TransferTest {
 
     @Test
     void shouldTransferMoneyBetweenOwnCards() {
-        // Given
         String firstCardNumber = DataHelper.getFirstCardNumber();
         String secondCardNumber = DataHelper.getSecondCardNumber();
+
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        int transferAmount = DataHelper.generateValidTransferAmount(initialFirstCardBalance);
 
-        // When
+        System.out.println("=== Initial balances ===");
+        System.out.println("First card balance: " + initialFirstCardBalance);
+        System.out.println("Second card balance: " + initialSecondCardBalance);
+
+        int transferAmount = DataHelper.generateValidTransferAmount(initialFirstCardBalance);
+        System.out.println("Transfer amount: " + transferAmount);
+
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         DashboardPage newDashboardPage = transferPage.makeTransfer(transferAmount, firstCardNumber);
 
-        // Then
-        int expectedFirstCardBalance = initialFirstCardBalance - transferAmount;
-        int expectedSecondCardBalance = initialSecondCardBalance + transferAmount;
         int actualFirstCardBalance = newDashboardPage.getCardBalance(firstCardNumber);
         int actualSecondCardBalance = newDashboardPage.getCardBalance(secondCardNumber);
 
-        assertEquals(expectedFirstCardBalance, actualFirstCardBalance);
-        assertEquals(expectedSecondCardBalance, actualSecondCardBalance);
+        System.out.println("=== After transfer ===");
+        System.out.println("Actual first card balance: " + actualFirstCardBalance);
+        System.out.println("Actual second card balance: " + actualSecondCardBalance);
+
+        int expectedFirstCardBalance = initialFirstCardBalance - transferAmount;
+        int expectedSecondCardBalance = initialSecondCardBalance + transferAmount;
+
+        System.out.println("Expected first card balance: " + expectedFirstCardBalance);
+        System.out.println("Expected second card balance: " + expectedSecondCardBalance);
+
+        assertEquals(expectedFirstCardBalance, actualFirstCardBalance,
+                "First card balance mismatch");
+        assertEquals(expectedSecondCardBalance, actualSecondCardBalance,
+                "Second card balance mismatch");
     }
 
     @Test
     void shouldNotTransferMoneyWhenAmountExceedsBalance() {
-        // Given
         String firstCardNumber = DataHelper.getFirstCardNumber();
         String secondCardNumber = DataHelper.getSecondCardNumber();
-        int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
-        int transferAmount = initialFirstCardBalance + 1000;
 
-        // When
+        int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        System.out.println("Initial first card balance: " + initialFirstCardBalance);
+
+        int transferAmount = initialFirstCardBalance + 1000;
+        System.out.println("Transfer amount (exceeds balance): " + transferAmount);
+
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
 
-        // Then
-        DashboardPage newDashboardPage = new DashboardPage();
-        int actualFirstCardBalance = newDashboardPage.getCardBalance(firstCardNumber);
-        int actualSecondCardBalance = newDashboardPage.getCardBalance(secondCardNumber);
+        int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        System.out.println("Actual first card balance after invalid transfer: " + actualFirstCardBalance);
 
-        // Балансы не должны измениться (ошибка перевода)
-        assertEquals(initialFirstCardBalance, actualFirstCardBalance);
-        assertEquals(DataHelper.getInitialCardBalance(), actualSecondCardBalance);
+        // Баланс не должен измениться
+        assertEquals(initialFirstCardBalance, actualFirstCardBalance,
+                "Balance should not change when transfer exceeds balance");
     }
 
     @Test
     void shouldNotTransferMoneyToSameCard() {
-        // Given
         String firstCardNumber = DataHelper.getFirstCardNumber();
-        int initialBalance = dashboardPage.getCardBalance(firstCardNumber);
-        int transferAmount = DataHelper.generateValidTransferAmount(initialBalance);
 
-        // When
+        int initialBalance = dashboardPage.getCardBalance(firstCardNumber);
+        System.out.println("Initial balance: " + initialBalance);
+
+        int transferAmount = DataHelper.generateValidTransferAmount(initialBalance);
+        System.out.println("Transfer amount (to same card): " + transferAmount);
+
         TransferPage transferPage = dashboardPage.selectCardForReplenish(firstCardNumber);
         transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
 
-        // Then
-        DashboardPage newDashboardPage = new DashboardPage();
-        int actualBalance = newDashboardPage.getCardBalance(firstCardNumber);
+        int actualBalance = dashboardPage.getCardBalance(firstCardNumber);
+        System.out.println("Actual balance after transfer to same card: " + actualBalance);
 
-        // Баланс не должен измениться (ошибка перевода на ту же карту)
-        assertEquals(initialBalance, actualBalance);
+        assertEquals(initialBalance, actualBalance,
+                "Balance should not change when transferring to same card");
     }
 
     @Test
     void shouldNotTransferZeroAmount() {
-        // Given
         String firstCardNumber = DataHelper.getFirstCardNumber();
         String secondCardNumber = DataHelper.getSecondCardNumber();
+
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        int transferAmount = 0;
+        System.out.println("Initial balances: " + initialFirstCardBalance + ", " + initialSecondCardBalance);
 
-        // When
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
-        transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
+        transferPage.makeInvalidTransfer(0, firstCardNumber);
 
-        // Then
-        DashboardPage newDashboardPage = new DashboardPage();
-        int actualFirstCardBalance = newDashboardPage.getCardBalance(firstCardNumber);
-        int actualSecondCardBalance = newDashboardPage.getCardBalance(secondCardNumber);
+        int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        int actualSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
+        System.out.println("After zero transfer: " + actualFirstCardBalance + ", " + actualSecondCardBalance);
 
-        // Балансы не должны измениться (ошибка перевода нулевой суммы)
         assertEquals(initialFirstCardBalance, actualFirstCardBalance);
         assertEquals(initialSecondCardBalance, actualSecondCardBalance);
     }
 
     @Test
     void shouldNotTransferNegativeAmount() {
-        // Given
         String firstCardNumber = DataHelper.getFirstCardNumber();
         String secondCardNumber = DataHelper.getSecondCardNumber();
+
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        int transferAmount = -100;
+        System.out.println("Initial balances: " + initialFirstCardBalance + ", " + initialSecondCardBalance);
 
-        // When
+        int transferAmount = -100;
+        System.out.println("Transfer amount (negative): " + transferAmount);
+
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
 
-        // Then
-        DashboardPage newDashboardPage = new DashboardPage();
-        int actualFirstCardBalance = newDashboardPage.getCardBalance(firstCardNumber);
-        int actualSecondCardBalance = newDashboardPage.getCardBalance(secondCardNumber);
+        int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        int actualSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
+        System.out.println("After negative transfer: " + actualFirstCardBalance + ", " + actualSecondCardBalance);
 
-        // Балансы не должны измениться (ошибка перевода отрицательной суммы)
         assertEquals(initialFirstCardBalance, actualFirstCardBalance);
         assertEquals(initialSecondCardBalance, actualSecondCardBalance);
     }
 
     @Test
     void shouldTransferAllMoneyToAnotherCard() {
-        // Given
         String firstCardNumber = DataHelper.getFirstCardNumber();
         String secondCardNumber = DataHelper.getSecondCardNumber();
+
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        int transferAmount = initialFirstCardBalance;
+        System.out.println("=== Initial balances ===");
+        System.out.println("First card balance: " + initialFirstCardBalance);
+        System.out.println("Second card balance: " + initialSecondCardBalance);
 
-        // When
+        int transferAmount = initialFirstCardBalance;
+        System.out.println("Transfer amount (all money): " + transferAmount);
+
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         DashboardPage newDashboardPage = transferPage.makeTransfer(transferAmount, firstCardNumber);
 
-        // Then
-        int expectedFirstCardBalance = 0;
-        int expectedSecondCardBalance = initialSecondCardBalance + transferAmount;
         int actualFirstCardBalance = newDashboardPage.getCardBalance(firstCardNumber);
         int actualSecondCardBalance = newDashboardPage.getCardBalance(secondCardNumber);
 
-        assertEquals(expectedFirstCardBalance, actualFirstCardBalance);
-        assertEquals(expectedSecondCardBalance, actualSecondCardBalance);
+        System.out.println("=== After transfer all money ===");
+        System.out.println("Actual first card balance: " + actualFirstCardBalance);
+        System.out.println("Actual second card balance: " + actualSecondCardBalance);
+
+        // Ожидаем, что на первой карте 0
+        assertEquals(0, actualFirstCardBalance, "First card should be 0 after transferring all money");
+        assertEquals(initialSecondCardBalance + transferAmount, actualSecondCardBalance);
     }
 }
