@@ -43,7 +43,11 @@ public class DataHelper {
     }
 
     public static int generateValidTransferAmount(int currentBalance) {
-        return faker.number().numberBetween(1, currentBalance);
+        // Генерируем сумму для перевода, учитывая возможный отрицательный баланс
+        if (currentBalance <= 0) {
+            return 1; // Минимальная сумма
+        }
+        return faker.number().numberBetween(1, Math.min(currentBalance, 1000));
     }
 
     public static String getLastFourDigits(String cardNumber) {

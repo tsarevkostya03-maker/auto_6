@@ -18,7 +18,6 @@ public class TransferTest {
     void setup() {
         Configuration.browserSize = "1920x1080";
         Configuration.timeout = 15000;
-        Configuration.headless = false;
 
         open("http://localhost:9999");
 
@@ -36,13 +35,7 @@ public class TransferTest {
 
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-
-        System.out.println("=== Initial balances ===");
-        System.out.println("First card balance: " + initialFirstCardBalance);
-        System.out.println("Second card balance: " + initialSecondCardBalance);
-
         int transferAmount = DataHelper.generateValidTransferAmount(initialFirstCardBalance);
-        System.out.println("Transfer amount: " + transferAmount);
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         DashboardPage newDashboardPage = transferPage.makeTransfer(transferAmount, firstCardNumber);
@@ -50,20 +43,8 @@ public class TransferTest {
         int actualFirstCardBalance = newDashboardPage.getCardBalance(firstCardNumber);
         int actualSecondCardBalance = newDashboardPage.getCardBalance(secondCardNumber);
 
-        System.out.println("=== After transfer ===");
-        System.out.println("Actual first card balance: " + actualFirstCardBalance);
-        System.out.println("Actual second card balance: " + actualSecondCardBalance);
-
-        int expectedFirstCardBalance = initialFirstCardBalance - transferAmount;
-        int expectedSecondCardBalance = initialSecondCardBalance + transferAmount;
-
-        System.out.println("Expected first card balance: " + expectedFirstCardBalance);
-        System.out.println("Expected second card balance: " + expectedSecondCardBalance);
-
-        assertEquals(expectedFirstCardBalance, actualFirstCardBalance,
-                "First card balance mismatch");
-        assertEquals(expectedSecondCardBalance, actualSecondCardBalance,
-                "Second card balance mismatch");
+        assertEquals(initialFirstCardBalance - transferAmount, actualFirstCardBalance);
+        assertEquals(initialSecondCardBalance + transferAmount, actualSecondCardBalance);
     }
 
     @Test
@@ -72,20 +53,15 @@ public class TransferTest {
         String secondCardNumber = DataHelper.getSecondCardNumber();
 
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
-        System.out.println("Initial first card balance: " + initialFirstCardBalance);
-
         int transferAmount = initialFirstCardBalance + 1000;
-        System.out.println("Transfer amount (exceeds balance): " + transferAmount);
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
 
         int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
-        System.out.println("Actual first card balance after invalid transfer: " + actualFirstCardBalance);
 
-        // Баланс не должен измениться
-        assertEquals(initialFirstCardBalance, actualFirstCardBalance,
-                "Balance should not change when transfer exceeds balance");
+        // Баланс не должен измениться (это ожидание, но из-за бага он меняется)
+        assertEquals(initialFirstCardBalance, actualFirstCardBalance);
     }
 
     @Test
@@ -93,19 +69,13 @@ public class TransferTest {
         String firstCardNumber = DataHelper.getFirstCardNumber();
 
         int initialBalance = dashboardPage.getCardBalance(firstCardNumber);
-        System.out.println("Initial balance: " + initialBalance);
-
         int transferAmount = DataHelper.generateValidTransferAmount(initialBalance);
-        System.out.println("Transfer amount (to same card): " + transferAmount);
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(firstCardNumber);
         transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
 
         int actualBalance = dashboardPage.getCardBalance(firstCardNumber);
-        System.out.println("Actual balance after transfer to same card: " + actualBalance);
-
-        assertEquals(initialBalance, actualBalance,
-                "Balance should not change when transferring to same card");
+        assertEquals(initialBalance, actualBalance);
     }
 
     @Test
@@ -115,14 +85,12 @@ public class TransferTest {
 
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        System.out.println("Initial balances: " + initialFirstCardBalance + ", " + initialSecondCardBalance);
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         transferPage.makeInvalidTransfer(0, firstCardNumber);
 
         int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int actualSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        System.out.println("After zero transfer: " + actualFirstCardBalance + ", " + actualSecondCardBalance);
 
         assertEquals(initialFirstCardBalance, actualFirstCardBalance);
         assertEquals(initialSecondCardBalance, actualSecondCardBalance);
@@ -135,17 +103,12 @@ public class TransferTest {
 
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        System.out.println("Initial balances: " + initialFirstCardBalance + ", " + initialSecondCardBalance);
-
-        int transferAmount = -100;
-        System.out.println("Transfer amount (negative): " + transferAmount);
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
-        transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
+        transferPage.makeInvalidTransfer(-100, firstCardNumber);
 
         int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int actualSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        System.out.println("After negative transfer: " + actualFirstCardBalance + ", " + actualSecondCardBalance);
 
         assertEquals(initialFirstCardBalance, actualFirstCardBalance);
         assertEquals(initialSecondCardBalance, actualSecondCardBalance);
@@ -158,25 +121,14 @@ public class TransferTest {
 
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
         int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
-        System.out.println("=== Initial balances ===");
-        System.out.println("First card balance: " + initialFirstCardBalance);
-        System.out.println("Second card balance: " + initialSecondCardBalance);
-
-        int transferAmount = initialFirstCardBalance;
-        System.out.println("Transfer amount (all money): " + transferAmount);
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
-        DashboardPage newDashboardPage = transferPage.makeTransfer(transferAmount, firstCardNumber);
+        DashboardPage newDashboardPage = transferPage.makeTransfer(initialFirstCardBalance, firstCardNumber);
 
         int actualFirstCardBalance = newDashboardPage.getCardBalance(firstCardNumber);
         int actualSecondCardBalance = newDashboardPage.getCardBalance(secondCardNumber);
 
-        System.out.println("=== After transfer all money ===");
-        System.out.println("Actual first card balance: " + actualFirstCardBalance);
-        System.out.println("Actual second card balance: " + actualSecondCardBalance);
-
-        // Ожидаем, что на первой карте 0
-        assertEquals(0, actualFirstCardBalance, "First card should be 0 after transferring all money");
-        assertEquals(initialSecondCardBalance + transferAmount, actualSecondCardBalance);
+        assertEquals(0, actualFirstCardBalance);
+        assertEquals(initialSecondCardBalance + initialFirstCardBalance, actualSecondCardBalance);
     }
 }
