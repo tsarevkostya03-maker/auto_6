@@ -16,8 +16,6 @@ public class TransferTest {
 
     @BeforeEach
     void setup() {
-        Configuration.browserSize = "1920x1080";
-        Configuration.timeout = 15000;
 
         open("http://localhost:9999");
 
@@ -53,29 +51,40 @@ public class TransferTest {
         String secondCardNumber = DataHelper.getSecondCardNumber();
 
         int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
         int transferAmount = initialFirstCardBalance + 1000;
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(secondCardNumber);
         transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
 
         int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        int actualSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
 
-        // Баланс не должен измениться (это ожидание, но из-за бага он меняется)
-        assertEquals(initialFirstCardBalance, actualFirstCardBalance);
+        assertEquals(initialFirstCardBalance, actualFirstCardBalance,
+                "Balance of first card should not change");
+        assertEquals(initialSecondCardBalance, actualSecondCardBalance,
+                "Balance of second card should not change");
     }
 
     @Test
     void shouldNotTransferMoneyToSameCard() {
         String firstCardNumber = DataHelper.getFirstCardNumber();
+        String secondCardNumber = DataHelper.getSecondCardNumber();
 
-        int initialBalance = dashboardPage.getCardBalance(firstCardNumber);
-        int transferAmount = DataHelper.generateValidTransferAmount(initialBalance);
+        int initialFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        int initialSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
+        int transferAmount = DataHelper.generateValidTransferAmount(initialFirstCardBalance);
 
         TransferPage transferPage = dashboardPage.selectCardForReplenish(firstCardNumber);
         transferPage.makeInvalidTransfer(transferAmount, firstCardNumber);
 
-        int actualBalance = dashboardPage.getCardBalance(firstCardNumber);
-        assertEquals(initialBalance, actualBalance);
+        int actualFirstCardBalance = dashboardPage.getCardBalance(firstCardNumber);
+        int actualSecondCardBalance = dashboardPage.getCardBalance(secondCardNumber);
+
+        assertEquals(initialFirstCardBalance, actualFirstCardBalance,
+                "Balance of first card should not change when transferring to itself");
+        assertEquals(initialSecondCardBalance, actualSecondCardBalance,
+                "Balance of second card should not change");
     }
 
     @Test
